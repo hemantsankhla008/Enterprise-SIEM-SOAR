@@ -6,7 +6,7 @@ services:
     buildCommand: pip install -r requirements.txt
     # Single worker: WebSocket connections live in process memory, so a second
     # worker would not receive broadcasts raised by the first.
-    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 1 --proxy-headers --forwarded-allow-ips='*'
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT --workers 1 --proxy-headers --forwarded-allow-ips='*'
     healthCheckPath: /healthz
     envVars:
       # Rotated away from the development defaults on every deploy.
