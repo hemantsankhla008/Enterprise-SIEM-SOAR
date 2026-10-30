@@ -3,7 +3,6 @@ services:
     name: enterprise-siem-soar
     runtime: python
     plan: free
-    pythonVersion: "3.13"
     buildCommand: pip install -r requirements.txt
     # Single worker: WebSocket connections live in process memory, so a second
     # worker would not receive broadcasts raised by the first.
