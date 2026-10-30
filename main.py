@@ -17,8 +17,8 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
 from database import LogEntry, SecurityAlert, SessionLocal, init_db
-from engine.auth import verify_api_key
-from engine.detection import analyze_and_respond
+from auth import verify_api_key
+from detection import analyze_and_respond
 
 logger = logging.getLogger("siem")
 
