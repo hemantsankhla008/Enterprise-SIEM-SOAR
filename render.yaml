@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: enterprise-siem-soar
+    runtime: python
+    plan: free
+    pythonVersion: "3.13"
+    buildCommand: pip install -r requirements.txt
+    # Single worker: WebSocket connections live in process memory, so a second
+    # worker would not receive broadcasts raised by the first.
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 1 --proxy-headers --forwarded-allow-ips='*'
+    healthCheckPath: /healthz
+    envVars:
+      # Rotated away from the development defaults on every deploy.
+      - key: ADMIN_API_KEY
+        generateValue: true
+      - key: AGENT_API_KEY
+        generateValue: true
+      - key: ANALYST_API_KEY
+        generateValue: true
+      - key: SEED_DEMO_DATA
+        value: "true"
+      # The free plan has no persistent disk, so the database resets whenever the
+      # instance restarts or spins down. Attach a disk and switch this to
+      # sqlite:////var/data/logs.db on a paid plan to keep incident history.
+      - key: DATABASE_URL
+        value: sqlite:///./logs.db
