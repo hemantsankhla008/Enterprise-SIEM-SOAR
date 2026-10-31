@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enterprise SIEM & SOAR Command Center</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen p-6">
+    <div class="max-w-7xl mx-auto space-y-6">
+        
+        <!-- Header & Live Status Indicator -->
+        <header class="flex justify-between items-center border-b border-slate-800 pb-4">
+            <div>
+                <h1 class="text-2xl font-bold text-cyan-400 tracking-wider">🛡️ ENTERPRISE SIEM / SOAR PLATFORM</h1>
+                <p class="text-xs text-slate-400">Autonomous Threat Ingestion & Forensic Incident Reporting Engine</p>
+            </div>
+            <div class="flex items-center space-x-3">
+                <button type="button" onclick="exportForensicReport()" class="bg-cyan-600/20 border border-cyan-500 hover:bg-cyan-600 text-cyan-200 px-3 py-1.5 rounded text-xs font-bold transition">📄 Export Forensic Report</button>
+                <div class="flex items-center space-x-2 bg-slate-900 px-3 py-1.5 rounded border border-slate-800">
+                    <span id="ws-status-dot" class="w-2.5 h-2.5 bg-amber-500 rounded-full animate-pulse"></span>
+                    <span id="ws-status-text" class="text-xs text-amber-400 font-bold">CONNECTING LIVE WEBSOCKET...</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- SOC Metrics KPI Cards -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-lg">
+                <p class="text-xs text-slate-400 uppercase font-semibold">Total Ingested Logs</p>
+                <h3 id="stat-logs" class="text-2xl font-bold text-cyan-400 mt-1">0</h3>
+            </div>
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-lg">
+                <p class="text-xs text-slate-400 uppercase font-semibold">Threat Alerts</p>
+                <h3 id="stat-alerts" class="text-2xl font-bold text-amber-400 mt-1">0</h3>
+            </div>
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-lg">
+                <p class="text-xs text-slate-400 uppercase font-semibold">Critical Threats</p>
+                <h3 id="stat-critical" class="text-2xl font-bold text-red-500 mt-1">0</h3>
+            </div>
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-lg">
+                <p class="text-xs text-slate-400 uppercase font-semibold">SOAR Firewall Blocks</p>
+                <h3 id="stat-blocks" class="text-2xl font-bold text-emerald-400 mt-1">0</h3>
+            </div>
+        </div>
+
+        <!-- Simulated Ingestion Controls -->
+        <div class="bg-slate-900 p-4 rounded-lg border border-slate-800">
+            <h2 class="text-xs font-semibold uppercase text-slate-400 mb-3">Simulate Incident Log Ingestion</h2>
+            <div class="flex flex-wrap gap-2">
+                <button onclick="sendSimulatedLog('SELECT * FROM users WHERE admin = 1 OR 1=1', '192.168.1.100')" class="bg-red-600/20 border border-red-500 hover:bg-red-600 text-red-200 px-3 py-1.5 rounded text-xs transition">Inject SQLi Attack</button>
+                <button onclick="sendSimulatedLog('Failed password for root from 10.0.0.50 port 22 ssh2', '10.0.0.50')" class="bg-amber-600/20 border border-amber-500 hover:bg-amber-600 text-amber-200 px-3 py-1.5 rounded text-xs transition">Inject SSH Brute Force</button>
+                <button onclick="sendSimulatedLog('GET /index.html HTTP/1.1 200 OK', '172.16.0.10')" class="bg-emerald-600/20 border border-emerald-500 hover:bg-emerald-600 text-emerald-200 px-3 py-1.5 rounded text-xs transition">Inject Normal Traffic</button>
+                <button onclick="sendSimulatedLog('GET /admin/exec.php?cmd=system_eval_payload_entropy_high_9832749827394827349', '192.168.1.105')" class="bg-purple-600/20 border border-purple-500 hover:bg-purple-600 text-purple-200 px-3 py-1.5 rounded text-xs transition">Inject AI Anomaly</button>
+            </div>
+        </div>
+
+        <!-- Analytics Visualizations Charts -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-lg">
+                <h2 class="text-xs font-semibold uppercase text-slate-400 mb-2">Threat Severity Distribution</h2>
+                <div class="h-48 flex justify-center">
+                    <canvas id="severityChart"></canvas>
+                </div>
+            </div>
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-lg">
+                <h2 class="text-xs font-semibold uppercase text-slate-400 mb-2">Attack Categories Breakdown</h2>
+                <div class="h-48 flex justify-center">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Realtime Data Feeds -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Incident Cases Feed -->
+            <div class="bg-slate-900 border border-slate-800 rounded-lg p-4">
+                <h2 class="text-sm font-semibold text-red-400 mb-3 uppercase tracking-wider">🚨 SOC Incident Case Management</h2>
+                <div class="overflow-x-auto max-h-72">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-slate-950 text-slate-400 uppercase sticky top-0">
+                            <tr>
+                                <th class="p-2">Time</th>
+                                <th class="p-2">Rule Name</th>
+                                <th class="p-2">GeoIP</th>
+                                <th class="p-2">Case Status</th>
+                                <th class="p-2">Analyst Triage</th>
+                            </tr>
+                        </thead>
+                        <tbody id="alerts-table-body" class="divide-y divide-slate-800">
+                            {% for alert in alerts %}
+                            <tr class="hover:bg-slate-800/50">
+                                <td class="p-2 font-mono text-slate-400">{{ alert.timestamp.strftime('%H:%M:%S') }}</td>
+                                <td class="p-2 font-bold text-slate-200">{{ alert.rule_name }}</td>
+                                <td class="p-2 text-cyan-300 font-mono">{{ alert.country }}</td>
+                                <td class="p-2"><span id="status-badge-{{ alert.id }}" class="px-2 py-0.5 rounded font-bold bg-amber-900 text-amber-200">{{ alert.status }}</span></td>
+                                <td class="p-2">
+                                    <button onclick="updateCaseStatus({{ alert.id }}, 'RESOLVED')" class="bg-emerald-600 hover:bg-emerald-500 text-white px-2 py-1 rounded text-[10px] font-bold">Close Case</button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Raw Syslogs Feed -->
+            <div class="bg-slate-900 border border-slate-800 rounded-lg p-4">
+                <h2 class="text-sm font-semibold text-cyan-400 mb-3 uppercase tracking-wider">📄 Raw Ingested Syslogs</h2>
+                <div class="overflow-x-auto max-h-72">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-slate-950 text-slate-400 uppercase sticky top-0">
+                            <tr>
+                                <th class="p-2">Time</th>
+                                <th class="p-2">Source IP</th>
+                                <th class="p-2">Payload</th>
+                            </tr>
+                        </thead>
+                        <tbody id="logs-table-body" class="divide-y divide-slate-800">
+                            {% for log in logs %}
+                            <tr class="hover:bg-slate-800/50">
+                                <td class="p-2 font-mono text-slate-400">{{ log.timestamp.strftime('%H:%M:%S') }}</td>
+                                <td class="p-2 font-mono text-emerald-400">{{ log.source_ip }}</td>
+                                <td class="p-2 font-mono text-slate-300 truncate max-w-xs">{{ log.raw_payload }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Injected server-side from the DASHBOARD_API_KEY env var. Scoped to the
+        // SOC_ANALYST role, never the admin key — anything placed here is readable
+        // by anyone who opens the page source.
+        const DASHBOARD_API_KEY = {{ dashboard_api_key | tojson }};
+
+        let logCount = {{ logs|length }};
+        let alertCount = {{ alerts|length }};
+        let criticalCount = 0;
+        let blockCount = 0;
+        
+        let sqliCount = 0;
+        let sshCount = 0;
+        let aiCount = 0;
+
+        document.getElementById('stat-logs').innerText = logCount;
+        document.getElementById('stat-alerts').innerText = alertCount;
+
+        const ctxSeverity = document.getElementById('severityChart').getContext('2d');
+        const severityChart = new Chart(ctxSeverity, {
+            type: 'doughnut',
+            data: {
+                labels: ['Critical', 'High', 'Normal'],
+                datasets: [{
+                    data: [0, 0, logCount],
+                    backgroundColor: ['#ef4444', '#f59e0b', '#10b981'],
+                    borderWidth: 0
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+
+        const ctxCategory = document.getElementById('categoryChart').getContext('2d');
+        const categoryChart = new Chart(ctxCategory, {
+            type: 'bar',
+            data: {
+                labels: ['SQL Injection', 'SSH Brute Force', 'AI Zero-Day'],
+                datasets: [{
+                    label: 'Detections',
+                    data: [0, 0, 0],
+                    backgroundColor: ['#dc2626', '#d97706', '#9333ea']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+            }
+        });
+
+        // Protocol-aware: wss:// on HTTPS hosts, ws:// on local http.
+        // A hardcoded ws:// is blocked as mixed content once the app is served over TLS.
+        const WS_SCHEME = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const WS_URL = `${WS_SCHEME}//${window.location.host}/ws/alerts`;
+
+        let ws;
+        let wsRetryDelay = 1000;
+
+        function setWsStatus(state) {
+            const dot = document.getElementById('ws-status-dot');
+            const text = document.getElementById('ws-status-text');
+            if (!dot || !text) return;
+            if (state === 'up') {
+                dot.className = "w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse";
+                text.className = "text-xs text-emerald-400 font-bold";
+                text.innerText = "REALTIME WEBSOCKET ACTIVE";
+            } else {
+                dot.className = "w-2.5 h-2.5 bg-red-500 rounded-full";
+                text.className = "text-xs text-red-400 font-bold";
+                text.innerText = "WEBSOCKET RECONNECTING...";
+            }
+        }
+
+        function connectWebSocket() {
+            ws = new WebSocket(WS_URL);
+
+            ws.onopen = () => {
+                wsRetryDelay = 1000;
+                setWsStatus('up');
+            };
+
+            // Managed hosts idle-close websockets; reconnect with backoff
+            // instead of leaving a dead dashboard behind.
+            ws.onclose = () => {
+                setWsStatus('down');
+                setTimeout(connectWebSocket, wsRetryDelay);
+                wsRetryDelay = Math.min(wsRetryDelay * 2, 30000);
+            };
+
+            ws.onerror = () => ws.close();
+            ws.onmessage = handleAlertMessage;
+        }
+
+        const handleAlertMessage = (event) => {
+            const data = JSON.parse(event.data);
+            
+            logCount++;
+            document.getElementById('stat-logs').innerText = logCount;
+
+            const logTable = document.getElementById('logs-table-body');
+            const newLogRow = `<tr class="hover:bg-slate-800/50 bg-slate-800/30 animate-pulse">
+                <td class="p-2 font-mono text-slate-400">${data.time}</td>
+                <td class="p-2 font-mono text-emerald-400">${data.ip}</td>
+                <td class="p-2 font-mono text-slate-300 truncate max-w-xs">${data.message}</td>
+            </tr>`;
+            logTable.insertAdjacentHTML('afterbegin', newLogRow);
+
+            if (data.threats && data.threats.length > 0) {
+                alertCount++;
+                document.getElementById('stat-alerts').innerText = alertCount;
+
+                const alertTable = document.getElementById('alerts-table-body');
+                data.threats.forEach(rule => {
+                    const isCritical = rule.includes("SQL") || rule.includes("Code Execution") || data.threat_score >= 90;
+                    
+                    if (isCritical) {
+                        criticalCount++;
+                        blockCount++;
+                        sqliCount++;
+                        document.getElementById('stat-critical').innerText = criticalCount;
+                        document.getElementById('stat-blocks').innerText = blockCount;
+                    } else if (rule.includes("SSH")) {
+                        sshCount++;
+                    } else if (rule.includes("AI")) {
+                        aiCount++;
+                    }
+
+                    severityChart.data.datasets[0].data[0] = criticalCount;
+                    severityChart.data.datasets[0].data[1] = alertCount - criticalCount;
+                    severityChart.data.datasets[0].data[2] = Math.max(0, logCount - alertCount);
+                    severityChart.update();
+
+                    categoryChart.data.datasets[0].data = [sqliCount, sshCount, aiCount];
+                    categoryChart.update();
+
+                    const newAlertRow = `<tr class="hover:bg-slate-800/50 bg-red-950/40 animate-pulse">
+                        <td class="p-2 font-mono text-slate-400">${data.time}</td>
+                        <td class="p-2 font-bold text-slate-200">${rule}</td>
+                        <td class="p-2 text-cyan-300 font-mono">${data.country}</td>
+                        <td class="p-2"><span class="px-2 py-0.5 rounded font-bold bg-amber-900 text-amber-200">OPEN</span></td>
+                        <td class="p-2"><span class="text-xs text-slate-400 italic">Saved to DB</span></td>
+                    </tr>`;
+                    alertTable.insertAdjacentHTML('afterbegin', newAlertRow);
+                });
+            } else {
+                severityChart.data.datasets[0].data[2] = Math.max(0, logCount - alertCount);
+                severityChart.update();
+            }
+        };
+
+        connectWebSocket();
+
+        // Heartbeat: the server reads and discards client frames, so this only
+        // exists to stop proxies and load balancers killing an idle socket.
+        setInterval(() => {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send('ping');
+            }
+        }, 25000);
+
+        async function updateCaseStatus(alertId, newStatus) {
+            const res = await fetch(`/api/v1/alert/${alertId}/update`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-api-key': DASHBOARD_API_KEY
+                },
+                body: JSON.stringify({ status: newStatus, notes: "Resolved by SOC Analyst Triage" })
+            });
+            if(res.ok) {
+                const badge = document.getElementById(`status-badge-${alertId}`);
+                if(badge) {
+                    badge.innerText = newStatus;
+                    badge.className = "px-2 py-0.5 rounded font-bold bg-emerald-900 text-emerald-200";
+                }
+            }
+        }
+
+        // The export endpoint requires the API key header, so it cannot be a plain
+        // link. Fetch it, then hand the browser a blob to download.
+        async function exportForensicReport() {
+            try {
+                const res = await fetch('/api/v1/report/export', {
+                    headers: { 'x-api-key': DASHBOARD_API_KEY }
+                });
+                if (!res.ok) {
+                    alert(`Forensic export failed (HTTP ${res.status})`);
+                    return;
+                }
+                const report = await res.json();
+                const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `forensic-audit-report-${stamp}.json`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+            } catch (err) {
+                alert(`Forensic export failed: ${err.message}`);
+            }
+        }
+
+        async function sendSimulatedLog(message, ip) {
+            await fetch('/api/v1/ingest', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-api-key': DASHBOARD_API_KEY
+                },
+                body: JSON.stringify({ message, ip, event_type: "SIMULATED_ATTACK" })
+            });
+        }
+    </script>
+</body>
+</html>
