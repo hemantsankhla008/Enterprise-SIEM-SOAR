@@ -1,4 +1,5 @@
 import re
+from sqlalchemy.orm import Session
 from database import SecurityAlert
 from ml_engine import anomaly_detector
 from threat_intel import enrich_ip_intel
