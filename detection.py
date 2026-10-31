@@ -1,9 +1,8 @@
 import re
-from sqlalchemy.orm import Session
-from app.database import SecurityAlert
-from app.engine.ml_engine import anomaly_detector
-from app.engine.threat_intel import enrich_ip_intel
-from app.engine.soar_playbook import execute_soar_playbook
+from database import SecurityAlert
+from ml_engine import anomaly_detector
+from threat_intel import enrich_ip_intel
+from soar_playbook import execute_soar_playbook
 
 RULES = [
     {
