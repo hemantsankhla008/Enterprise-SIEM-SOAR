@@ -2,18 +2,58 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Enterprise SIEM & SOAR</title>
+    <title>SIEM & SOAR Dashboard</title>
     <style>
-        body { font-family: 'Courier New', Courier, monospace; background-color: #0d1117; color: #c9d1d9; padding: 50px; text-align: center; }
-        h1 { color: #58a6ff; }
-        .alert-box { border: 1px solid #30363d; padding: 20px; border-radius: 10px; background-color: #161b22; margin-top: 20px; }
+        body { font-family: 'Courier New', Courier, monospace; background-color: #0d1117; color: #c9d1d9; padding: 40px; }
+        h1 { color: #58a6ff; text-align: center; }
+        .panel { background: #161b22; padding: 25px; border-radius: 10px; border: 1px solid #30363d; max-width: 700px; margin: 0 auto; }
+        .attack-btn { background: #da3633; color: white; border: none; padding: 12px 24px; cursor: pointer; border-radius: 5px; font-weight: bold; font-size: 16px; }
+        .attack-btn:hover { background: #f85149; }
+        #terminal-output { background: #000; color: #ff7b72; padding: 15px; margin-top: 20px; border-radius: 5px; min-height: 80px; text-align: left; overflow-x: auto; }
+        .status { text-align: center; margin-bottom: 30px; font-size: 18px; }
     </style>
 </head>
 <body>
-    <h1>Enterprise SIEM & SOAR Dashboard</h1>
-    <div class="alert-box">
-        <h2>System Status: LIVE 🟢</h2>
-        <p>Listening for security events and executing playbooks...</p>
+    <h1>🛡️ Enterprise SIEM & SOAR</h1>
+    <div class="status">System Status: LIVE 🟢 | Listening for threats...</div>
+
+    <div class="panel">
+        <h2>⚠️ Test Rule Engine (Live Simulator)</h2>
+        <p>Click the button below to simulate an SSH Brute Force attack directly to your backend API.</p>
+        
+        <button class="attack-btn" onclick="triggerAttack()">Launch SSH Brute Force Attack</button>
+        
+        <h3 style="margin-top:30px;">Backend Alert Output:</h3>
+        <pre id="terminal-output">Awaiting logs...</pre>
     </div>
+
+    <script>
+        async function triggerAttack() {
+            const outputBox = document.getElementById('terminal-output');
+            outputBox.style.color = "#8b949e";
+            outputBox.innerText = "Sending malicious payload to /api/v1/ingest...";
+
+            try {
+                // Tumhare API endpoint par fake log bhej raha hai
+                const response = await fetch('/api/v1/ingest', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        raw_log: "Nov 2 10:50:00 server sshd[1234]: Failed password for invalid user admin from 45.33.22.11 port 22 ssh2",
+                        source_ip: "45.33.22.11"
+                    })
+                });
+
+                const result = await response.json();
+                
+                // Alert detect hote hi usko screen par print karega
+                outputBox.style.color = "#ff7b72";
+                outputBox.innerText = "🚨 ALERT DETECTED BY BACKEND!\n\n" + JSON.stringify(result, null, 2);
+            } catch (error) {
+                outputBox.style.color = "red";
+                outputBox.innerText = "Error connecting to backend API: " + error;
+            }
+        }
+    </script>
 </body>
 </html>
